@@ -54,6 +54,7 @@ public final class HmilyThreadFactory implements ThreadFactory {
     public Thread newThread(final Runnable runnable) {
         Thread thread = new Thread(THREAD_GROUP, runnable,
                 THREAD_GROUP.getName() + "-" + namePrefix + "-" + THREAD_NUMBER.getAndIncrement());
+        // 是否是守护线程
         thread.setDaemon(daemon);
         if (thread.getPriority() != Thread.NORM_PRIORITY) {
             thread.setPriority(Thread.NORM_PRIORITY);

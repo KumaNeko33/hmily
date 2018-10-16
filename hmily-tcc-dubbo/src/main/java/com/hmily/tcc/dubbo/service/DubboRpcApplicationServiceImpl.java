@@ -41,6 +41,7 @@ public class DubboRpcApplicationServiceImpl implements RpcApplicationService {
         this.applicationConfig = applicationConfig;
     }
 
+    // 获取dubbo应用的name
     @Override
     public String acquireName() {
         return Optional.ofNullable(applicationConfig).orElse(new ApplicationConfig("hmily-dubbo")).getName();

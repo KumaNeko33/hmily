@@ -61,7 +61,7 @@ public enum RepositorySupportEnum {
     private final String support;
 
     /**
-     * Acquire compensate cache type compensate cache type enum.
+     * Acquire compensate（补偿） cache type enum by compensate cache type.
      *
      * @param support the compensate cache type
      * @return the compensate cache type enum

@@ -59,14 +59,16 @@ public class StarterHmilyTransactionHandler implements HmilyTransactionHandler {
             throws Throwable {
         Object returnValue;
         try {
+            // 创建发起者事务
             TccTransaction tccTransaction = hmilyTransactionExecutor.begin(point);
             try {
-                //execute try
+                // execute try，执行（进入）发起者切面方法
                 returnValue = point.proceed();
+                //发起者的切面方法执行完并返回
                 tccTransaction.setStatus(TccActionEnum.TRYING.getCode());
                 hmilyTransactionExecutor.updateStatus(tccTransaction);
             } catch (Throwable throwable) {
-                //if exception ,execute cancel
+                //if exception ,execute cancel，如果dubbo远程调用过程中发生异常，进行cancel方法回滚
                 final TccTransaction currentTransaction = hmilyTransactionExecutor.getCurrentTransaction();
                 executor.execute(() -> hmilyTransactionExecutor
                         .cancel(currentTransaction));

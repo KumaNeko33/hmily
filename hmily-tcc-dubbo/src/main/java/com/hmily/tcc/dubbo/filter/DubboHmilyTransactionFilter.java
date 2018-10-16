@@ -79,6 +79,7 @@ public class DubboHmilyTransactionFilter implements Filter {
         }
         if (Objects.nonNull(tcc)) {
             try {
+                // 发起者调用dubbo方法时，这里将是发起者的事务上下文
                 final TccTransactionContext tccTransactionContext = TransactionContextLocal.getInstance().get();
                 if (Objects.nonNull(tccTransactionContext)) {
                     if (tccTransactionContext.getRole() == TccRoleEnum.LOCAL.getCode()) {
@@ -87,8 +88,9 @@ public class DubboHmilyTransactionFilter implements Filter {
                     RpcContext.getContext()
                             .setAttachment(CommonConstant.TCC_TRANSACTION_CONTEXT, GsonUtils.getInstance().toJson(tccTransactionContext));
                 }
+                // 调用远程dubbo方法，返回结果Result
                 final Result result = invoker.invoke(invocation);
-                //如果result 没有异常就保存
+                // 如果result 没有异常就保存
                 if (!result.hasException()) {
                     final Participant participant = buildParticipant(tccTransactionContext, tcc, method, clazz, arguments, args);
                     if (tccTransactionContext.getRole() == TccRoleEnum.INLINE.getCode()) {
@@ -98,6 +100,7 @@ public class DubboHmilyTransactionFilter implements Filter {
                         hmilyTransactionExecutor.enlistParticipant(participant);
                     }
                 } else {
+                    // 远程调用有异常就在dubbo Filter中抛出，然后在 发起者的切面中的拦截后 进行回滚
                     throw new TccRuntimeException("rpc invoke exception{}", result.getException());
                 }
                 return result;

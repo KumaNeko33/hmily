@@ -61,6 +61,7 @@ public enum SerializeEnum {
      * @return the serialize protocol enum
      */
     public static SerializeEnum acquire(final String serialize) {
+        // SerializeEnum.values():获取所有序列化方式的枚举值
         Optional<SerializeEnum> serializeEnum =
                 Arrays.stream(SerializeEnum.values())
                         .filter(v -> Objects.equals(v.getSerialize(), serialize))

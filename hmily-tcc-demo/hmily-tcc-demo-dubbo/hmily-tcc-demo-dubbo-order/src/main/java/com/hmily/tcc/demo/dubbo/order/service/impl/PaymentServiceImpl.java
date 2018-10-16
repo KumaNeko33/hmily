@@ -132,6 +132,8 @@ public class PaymentServiceImpl implements PaymentService {
         InventoryDTO inventoryDTO = new InventoryDTO();
         inventoryDTO.setCount(order.getCount());
         inventoryDTO.setProductId(order.getProductId());
+        // 下面调用方法中没有 进行一次捕获，如果dubbo Filter中抛出异常，
+        // 之后将被发起者的 StarterHmilyTransactionHandler的 切面调用的异常捕获处理--进行事务的回滚
         inventoryService.mockWithTryException(inventoryDTO);
         return "success";
     }

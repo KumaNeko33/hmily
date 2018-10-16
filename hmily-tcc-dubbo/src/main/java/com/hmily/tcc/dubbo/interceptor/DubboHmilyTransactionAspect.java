@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * dubbo impl aspect.
+ * 在项目引入 hmily-tcc-dubbo
  * @author xiaoyu
  */
 @Aspect

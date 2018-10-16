@@ -72,7 +72,7 @@ public class ScheduledService {
     }
 
     /**
-     * if have some exception by schedule execute tcc transaction log.
+     * if have some exception，solve problem by schedule execute tcc transaction log.
      */
     public void scheduledRollBack() {
         scheduledExecutorService

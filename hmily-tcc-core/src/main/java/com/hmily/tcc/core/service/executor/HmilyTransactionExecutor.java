@@ -84,15 +84,15 @@ public class HmilyTransactionExecutor {
      */
     public TccTransaction begin(final ProceedingJoinPoint point) {
         LogUtil.debug(LOGGER, () -> "......hmily transaction！start....");
-        //build tccTransaction
+        //build tccTransaction 构建发起者事务
         final TccTransaction tccTransaction = buildTccTransaction(point, TccRoleEnum.START.getCode(), null);
-        //save tccTransaction in threadLocal
+        //save tccTransaction in threadLocal 将事务保存到 ThreadLocal
         CURRENT.set(tccTransaction);
-        //publishEvent
+        //publishEvent 将事务保存到 数据库
         hmilyTransactionEventPublisher.publishEvent(tccTransaction, EventTypeEnum.SAVE.getCode());
-        //set TccTransactionContext this context transfer remote
+        //set TccTransactionContext this context transfer remote 设置事务上下文
         TccTransactionContext context = new TccTransactionContext();
-        //set action is try
+        //set action is try? why not pre_try
         context.setAction(TccActionEnum.TRYING.getCode());
         context.setTransId(tccTransaction.getTransId());
         context.setRole(TccRoleEnum.START.getCode());
@@ -296,6 +296,11 @@ public class HmilyTransactionExecutor {
         return participants;
     }
 
+    /**
+     * 反射调用 事务回滚/提交 方法
+     * @param tccInvocation
+     * @throws Exception
+     */
     private void executeParticipantMethod(final TccInvocation tccInvocation) throws Exception {
         if (Objects.nonNull(tccInvocation)) {
             final Class clazz = tccInvocation.getTargetClass();
@@ -345,6 +350,7 @@ public class HmilyTransactionExecutor {
             cancelInvocation = new TccInvocation(clazz, cancelMethodName, method.getParameterTypes(), args);
         }
         final Participant participant = new Participant(tccTransaction.getTransId(), confirmInvocation, cancelInvocation);
+        // 封装当前方法的事务的确认和回滚方法
         tccTransaction.registerParticipant(participant);
         return tccTransaction;
     }

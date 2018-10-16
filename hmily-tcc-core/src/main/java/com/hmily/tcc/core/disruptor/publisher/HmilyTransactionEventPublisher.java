@@ -74,7 +74,7 @@ public class HmilyTransactionEventPublisher implements DisposableBean {
         final Executor executor = new ThreadPoolExecutor(threadSize, threadSize, 0, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<>(),
                 HmilyThreadFactory.create("hmily-log-disruptor", false),
-                new ThreadPoolExecutor.AbortPolicy());
+                new ThreadPoolExecutor.AbortPolicy()); // AbortPolicy 消息多到阻塞队列放不下时抛异常
 
         HmilyConsumerDataHandler[] consumers = new HmilyConsumerDataHandler[threadSize];
         for (int i = 0; i < threadSize; i++) {

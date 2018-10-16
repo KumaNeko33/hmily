@@ -47,8 +47,11 @@ public class CoordinatorServiceImpl implements CoordinatorService {
     @Override
     public void start(final TccConfig tccConfig) {
         final String repositorySuffix = buildRepositorySuffix(tccConfig.getRepositorySuffix());
+        System.out.println("数据库表名:" + repositorySuffix);
         coordinatorRepository = SpringBeanUtils.getInstance().getBean(CoordinatorRepository.class);
+        // 初始化事务数据库
         coordinatorRepository.init(repositorySuffix, tccConfig);
+        // 开启定时事务补偿
         new ScheduledService(tccConfig, coordinatorRepository).scheduledRollBack();
     }
 
@@ -90,6 +93,7 @@ public class CoordinatorServiceImpl implements CoordinatorService {
         if (StringUtils.isNoneBlank(repositorySuffix)) {
             return repositorySuffix;
         } else {
+            // 获取dubbo应用的name
             return rpcApplicationService.acquireName();
         }
     }

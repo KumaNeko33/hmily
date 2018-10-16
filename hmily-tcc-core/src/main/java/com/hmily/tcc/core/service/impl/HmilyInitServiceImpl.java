@@ -71,7 +71,9 @@ public class HmilyInitServiceImpl implements HmilyInitService {
     public void initialization(final TccConfig tccConfig) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> LOGGER.info("hmily shutdown now")));
         try {
+            // 使用SPI机制加载配置
             loadSpiSupport(tccConfig);
+            // 协调者 消息生产和处理
             hmilyTransactionEventPublisher.start(tccConfig.getBufferSize(), tccConfig.getConsumerThreads());
             coordinatorService.start(tccConfig);
         } catch (Exception ex) {
@@ -87,19 +89,22 @@ public class HmilyInitServiceImpl implements HmilyInitService {
      * @param tccConfig {@linkplain TccConfig}
      */
     private void loadSpiSupport(final TccConfig tccConfig) {
-        //spi serialize
+        //spi serialize,获取tccConfig指定的序列化的枚举值
         final SerializeEnum serializeEnum = SerializeEnum.acquire(tccConfig.getSerializer());
+        // ServiceLoad.load(clazz) 根据传入的接口类clazz，遍历META-INF/services目录下的以该类命名的文件中的所有类，并实例化返回。
         final ServiceLoader<ObjectSerializer> objectSerializers = ServiceBootstrap.loadAll(ObjectSerializer.class);
+        // 从上面获取的子类获取和配置中对应的
         final ObjectSerializer serializer = StreamSupport.stream(objectSerializers.spliterator(), false)
                 .filter(objectSerializer -> Objects.equals(objectSerializer.getScheme(), serializeEnum.getSerialize()))
                 .findFirst().orElse(new KryoSerializer());
-        //spi repository
+        //spi repository，获取所有事务存储方式的枚举值
         final RepositorySupportEnum repositorySupportEnum = RepositorySupportEnum.acquire(tccConfig.getRepositorySupport());
         final ServiceLoader<CoordinatorRepository> recoverRepositories = ServiceBootstrap.loadAll(CoordinatorRepository.class);
         final CoordinatorRepository repository = StreamSupport.stream(recoverRepositories.spliterator(), false)
                 .filter(recoverRepository -> Objects.equals(recoverRepository.getScheme(), repositorySupportEnum.getSupport()))
                 .findFirst().orElse(new JdbcCoordinatorRepository());
         repository.setSerializer(serializer);
+        // 将事务存储方式存入 Spring上下文
         SpringBeanUtils.getInstance().registerBean(CoordinatorRepository.class.getName(), repository);
     }
 }

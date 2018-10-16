@@ -25,6 +25,7 @@ public class HmilyConsumerDataHandler implements WorkHandler<HmilyTransactionEve
 
     @Override
     public void onEvent(final HmilyTransactionEvent event) {
+        // 消息事件类型进行 对应处理
         executor.execute(() -> {
             if (event.getType() == EventTypeEnum.SAVE.getCode()) {
                 coordinatorService.save(event.getTccTransaction());

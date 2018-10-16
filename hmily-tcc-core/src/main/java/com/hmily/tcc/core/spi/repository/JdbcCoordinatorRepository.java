@@ -254,7 +254,7 @@ public class JdbcCoordinatorRepository implements CoordinatorRepository {
     }
 
     private Object convertDataTypeToDB(final Object params) {
-        //https://jdbc.postgresql.org/documentation/head/8-date-time.html
+        //https://jdbc.postgresql.org/documentation/head/8-date-time.html，针对PostgreSql的日期转换
         if (CommonConstant.DB_POSTGRESQL.equals(currentDBType) && params instanceof java.util.Date) {
             return LocalDateTime.ofInstant(Instant.ofEpochMilli(((Date) params).getTime()), ZoneId.systemDefault());
         }
