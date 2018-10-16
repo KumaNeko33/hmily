@@ -90,13 +90,14 @@ public class DubboHmilyTransactionFilter implements Filter {
                 }
                 // 调用远程dubbo方法，返回结果Result
                 final Result result = invoker.invoke(invocation);
-                // 如果result 没有异常就保存
+                // 如果result 没有异常就保存，发起者dubbo这里的tcc只有接口上的空配置，及confirm和cancel方法是空的，故使用 所调用dubbo方法接口名 作为confirm和cancel方法
                 if (!result.hasException()) {
                     final Participant participant = buildParticipant(tccTransactionContext, tcc, method, clazz, arguments, args);
                     if (tccTransactionContext.getRole() == TccRoleEnum.INLINE.getCode()) {
                         hmilyTransactionExecutor.registerByNested(tccTransactionContext.getTransId(),
                                 participant);
                     } else {
+                        // add participant. dubbo方法调用成功，将所调用的方法的 comfirm和cancel方法调用点 添加到 发起者的当前事务中，并同时更新数据库事务的调用点
                         hmilyTransactionExecutor.enlistParticipant(participant);
                     }
                 } else {
@@ -120,6 +121,7 @@ public class DubboHmilyTransactionFilter implements Filter {
                                          final Object[] arguments, final Class... args) throws TccRuntimeException {
 
         if (Objects.isNull(tccTransactionContext)
+                // 发起者刚创建tccTransactionContext的行为状态就是TccActionEnum.TRYING
                 || (TccActionEnum.TRYING.getCode() != tccTransactionContext.getAction())) {
             return null;
         }

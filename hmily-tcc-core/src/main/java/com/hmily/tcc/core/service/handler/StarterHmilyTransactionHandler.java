@@ -68,7 +68,7 @@ public class StarterHmilyTransactionHandler implements HmilyTransactionHandler {
                 tccTransaction.setStatus(TccActionEnum.TRYING.getCode());
                 hmilyTransactionExecutor.updateStatus(tccTransaction);
             } catch (Throwable throwable) {
-                //if exception ,execute cancel，如果dubbo远程调用过程中发生异常，进行cancel方法回滚
+                //if exception ,execute cancel，如果dubbo远程调用过程中发生异常，使用线程池异步进行cancel方法回滚
                 final TccTransaction currentTransaction = hmilyTransactionExecutor.getCurrentTransaction();
                 executor.execute(() -> hmilyTransactionExecutor
                         .cancel(currentTransaction));

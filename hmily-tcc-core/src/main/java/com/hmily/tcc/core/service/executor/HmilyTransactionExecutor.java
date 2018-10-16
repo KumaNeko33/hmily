@@ -246,6 +246,8 @@ public class HmilyTransactionExecutor {
             deleteTransaction(currentTransaction);
             return;
         }
+        // 获取发起者的 事务提交和回滚方法，包括每次调用dubbo远程方法成功的 该方法的 confirm和cancel的调用点
+        // 如果是参与者（没有调用其他的dubbo方法（需要事务的）），则只有 在创建事务时，Participant封装的自身的 confirm和cancel方法
         final List<Participant> participants = filterPoint(currentTransaction);
         boolean success = true;
         List<Participant> failList = Lists.newArrayListWithCapacity(participants.size());
@@ -253,12 +255,20 @@ public class HmilyTransactionExecutor {
             currentTransaction.setStatus(TccActionEnum.CANCELING.getCode());
             //update cancel
             updateStatus(currentTransaction);
+            // 调用发起者的 事务回滚方法，包括每次调用dubbo远程方法成功的调用点封装的 cancel方法
             for (Participant participant : participants) {
                 try {
                     TccTransactionContext context = new TccTransactionContext();
                     context.setAction(TccActionEnum.CANCELING.getCode());
                     context.setTransId(participant.getTransId());
                     context.setRole(TccRoleEnum.START.getCode());
+                    // 这个action= TccActionEnum.CANCELING 的事务上下文 context 将会在 调用dubbo回滚方法时 通过RpcContext.getContext().setAttachment()方法 传递到dubbo方法所在项目的 dubbo上下文中
+                    // 然后在该 dubbo方法项目中，调用dubbo方法 cancel之前，切面处理器 ParticipantHmilyTransactionHandler 能获取到 这个事务上下文 及action= TccActionEnum.CANCELING
+                    // 则切面处理器 ParticipantHmilyTransactionHandler 会调用 本地事务的中在（发起者第一次调用该dubbo方法时创建的 TccTransaction 保存的Participant调用点封装的 本地cancel方法
+//                   即ParticipantHmilyTransactionHandler选择进入 case CANCELING:
+//                        currentTransaction = TccTransactionCacheManager.getInstance().getTccTransaction(context.getTransId());
+//                        hmilyTransactionExecutor.cancel(currentTransaction);
+//                        break;
                     TransactionContextLocal.getInstance().set(context);
                     executeParticipantMethod(participant.getCancelTccInvocation());
                 } catch (Throwable e) {
@@ -286,6 +296,7 @@ public class HmilyTransactionExecutor {
     private List<Participant> filterPoint(final TccTransaction currentTransaction) {
         final List<Participant> participants = currentTransaction.getParticipants();
         if (CollectionUtils.isNotEmpty(participants)) {
+            // 发起者的切面方法执行完毕currentTransaction.getStatus() == TccActionEnum.TRYING.getCode()，过滤掉为空的发起者的 事务回滚方法
             if (currentTransaction.getStatus() == TccActionEnum.TRYING.getCode()
                     && currentTransaction.getRole() == TccRoleEnum.START.getCode()) {
                 return participants.stream()
@@ -307,6 +318,7 @@ public class HmilyTransactionExecutor {
             final String method = tccInvocation.getMethodName();
             final Object[] args = tccInvocation.getArgs();
             final Class[] parameterTypes = tccInvocation.getParameterTypes();
+            // 获取spring管理的clazz的bean
             final Object bean = SpringBeanUtils.getInstance().getBean(clazz);
             MethodUtils.invokeMethod(bean, method, args, parameterTypes);
         }

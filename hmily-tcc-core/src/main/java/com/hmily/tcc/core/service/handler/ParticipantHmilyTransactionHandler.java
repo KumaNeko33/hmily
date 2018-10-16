@@ -50,6 +50,7 @@ public class ParticipantHmilyTransactionHandler implements HmilyTransactionHandl
     public Object handler(final ProceedingJoinPoint point, final TccTransactionContext context) throws Throwable {
         TccTransaction tccTransaction = null;
         TccTransaction currentTransaction;
+        // 根据dubbo上下文中保存的 发起者事务上下文 来判断当前是 执行业务方法，还是
         switch (TccActionEnum.acquireByCode(context.getAction())) {
             case TRYING:
                 try {
